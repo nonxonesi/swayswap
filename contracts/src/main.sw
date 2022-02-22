@@ -102,6 +102,18 @@ struct SwapWithMaximumParams {
     deadline: u64,
 }
 
+struct RemoveLiquidityReturn {
+    eth_amt: u64,
+    token_amt: u64
+}
+
+struct InputPriceParams {
+    input_amount: u64,
+    input_reserve: u64,
+    output_reserve: u64
+}
+
+
 ////////////////////////////////////////
 // ABI declaration
 ////////////////////////////////////////
@@ -114,11 +126,13 @@ abi Exchange {
     /// Deposit ETH and Tokens at current ratio to mint SWAYSWAP tokens.
     fn add_liquidity(gas_: u64, amount_: u64, asset_id_: b256, params: AddLiquidityParams) -> u64;
     /// Burn SWAYSWAP tokens to withdraw ETH and Tokens at current ratio.
-    fn remove_liquidity(gas_: u64, amount_: u64, asset_id_: b256, params: RemoveLiquidityParams) -> (u64, u64);
+    fn remove_liquidity(gas_: u64, amount_: u64, asset_id_: b256, params: RemoveLiquidityParams) -> RemoveLiquidityReturn;
     /// Swap ETH <-> Tokens and tranfers to sender.
     fn swap_with_minimum(gas_: u64, amount_: u64, asset_id_: b256, params: SwapWithMinimumParams) -> u64;
     /// Swap ETH <-> Tokens and tranfers to sender.
     fn swap_with_maximum(gas_: u64, amount_: u64, asset_id_: b256, params: SwapWithMaximumParams) -> u64;
+    fn input_price(gas_: u64, amount_: u64, asset_id_: b256, params: InputPriceParams) -> u64;
+
 }
 
 ////////////////////////////////////////
@@ -144,7 +158,7 @@ fn get_input_price(input_amount: u64, input_reserve: u64, output_reserve: u64) -
     assert(input_reserve > 0 && output_reserve > 0);
     let input_amount_with_fee: u64 = input_amount * 997;
     let numerator: u64 = input_amount_with_fee * output_reserve;
-    let denominator: u64 = (input_reserve * 1000) * input_amount_with_fee;
+    let denominator: u64 = (input_reserve * 1000) + input_amount_with_fee;
     numerator / denominator
 }
 
@@ -161,6 +175,12 @@ fn get_output_price(output_amount: u64, input_reserve: u64, output_reserve: u64)
 // ////////////////////////////////////////
 
 impl Exchange for Contract {
+
+    fn input_price(gas_: u64, amount_: u64, asset_id_: b256, params: InputPriceParams) -> u64 {
+        get_input_price(params.input_amount, params.input_reserve, params.output_reserve)
+    }
+    
+    
     fn deposit(gas_: u64, amount_: u64, asset_id_: b256, params: ()) {
         assert(msg_asset_id() == ETH_ID || msg_asset_id() == TOKEN_ID);
 
@@ -172,7 +192,10 @@ impl Exchange for Contract {
         let total_amount = get::<u64>(key) + msg_amount();
         store(key, total_amount);
     }
-
+    
+    
+    
+    
     fn withdraw(gas_: u64, amount_: u64, asset_id_: b256, params: WithdrawParams) {
         let asset_id = params.asset_id.into();
         assert(asset_id == ETH_ID || asset_id == TOKEN_ID);
@@ -190,6 +213,7 @@ impl Exchange for Contract {
 
         transfer_to_output(params.amount, ~ContractId::from(contract_id()), sender);
     }
+    
 
     fn add_liquidity(gas_: u64, amount_: u64, asset_id_: b256, params: AddLiquidityParams) -> u64 {
         // No coins should be sent with this call. Coins should instead be `deposit`ed prior.
@@ -248,7 +272,8 @@ impl Exchange for Contract {
         minted
     }
 
-    fn remove_liquidity(gas_: u64, amount_: u64, asset_id_: b256, params: RemoveLiquidityParams) -> (u64, u64) {
+    
+    fn remove_liquidity(gas_: u64, amount_: u64, asset_id_: b256, params: RemoveLiquidityParams) -> RemoveLiquidityReturn {
         assert(msg_amount() > 0);
         assert(msg_asset_id() == contract_id());
         assert(params.deadline > height());
@@ -275,8 +300,10 @@ impl Exchange for Contract {
         transfer_to_output(eth_amount, ~ContractId::from(ETH_ID), sender);
         transfer_to_output(token_amount, ~ContractId::from(TOKEN_ID), sender);
 
-        (eth_amount, token_amount)
+        RemoveLiquidityReturn{eth_amt: eth_amount, token_amt: token_amount}
+
     }
+    
 
     fn swap_with_minimum(gas_: u64, amount_: u64, asset_id_: b256, params: SwapWithMinimumParams) -> u64 {
         assert(params.deadline >= height());
@@ -305,6 +332,7 @@ impl Exchange for Contract {
 
         bought
     }
+
 
     fn swap_with_maximum(gas_: u64, amount_: u64, asset_id_: b256, params: SwapWithMaximumParams) -> u64 {
         assert(params.deadline >= height());
