@@ -6,33 +6,37 @@ use rand::{Rng, SeedableRng};
 
 // Generate Rust bindings from our contract JSON ABI
 // FIXME: Incorrect path, see https://github.com/FuelLabs/fuels-rs/issues/94
-abigen!(MyContract, "./swaySwapABI.json");
+abigen!(SwaySwap, "./swaySwapABI.json");
 
 #[tokio::test]
 async fn harness() {
 
-    
     // Build the contract
     let rng = &mut StdRng::seed_from_u64(2322u64);
     let salt: [u8; 32] = rng.gen();
     let salt = Salt::from(salt);
-    let compiled = Contract::compile_sway_contract("./", salt).unwrap();
+    let swayswap_compiled = Contract::compile_sway_contract("./src/main.sw", salt).unwrap();
 
     // Launch a local network and deploy the contract
-    let (client, _contract_id) = Contract::launch_and_deploy(&compiled).await.unwrap();
+    let (client, swapswap_contract_id) = Contract::launch_and_deploy(&swayswap_compiled).await.unwrap();
 
-    let contract_instance = MyContract::new(compiled, client);
+    println!("Deployments:");
+    println!("{}", swapswap_contract_id);
+
+    let sway_swap = SwaySwap::new(swayswap_compiled, client);
+
+    // Check output amounts calculation
+    let initial_reserve_a = 10_000_000;
+    let initial_reserve_b = 10_000_000;
+    let amount_in = 10_000;
 
 
-    let initial_reserve_a = 10_000;
-    let initial_reserve_b = 10_000;
-    let amount_in = 50;
+    // Get current pool "midpoint"
+    let midpoint = initial_reserve_b as f64 / initial_reserve_a as f64;
 
-    let midpoint = initial_reserve_a as f64 / initial_reserve_b as f64;
-
-    let result = contract_instance
+    let result = sway_swap
     .input_price(
-        InputPriceParam{
+        InputPriceParam {
             input_amount: amount_in,
             input_reserve: initial_reserve_a,
             output_reserve : initial_reserve_b
@@ -42,10 +46,9 @@ async fn harness() {
     .await
     .unwrap();
 
+    // Calculate slippage from amount out
     let price_realized = result.value as f64 / amount_in as f64;
-
     let slippage_pct = 100. * (1. - (price_realized / midpoint));
-
     println!("Trading {} results in {:.2}% slippage", amount_in, slippage_pct);
     
 
