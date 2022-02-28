@@ -113,6 +113,11 @@ struct InputPriceParams {
     output_reserve: u64
 }
 
+struct ReservesReturn {
+    eth_reserve: u64,
+    token_reserve: u64
+}
+
 
 ////////////////////////////////////////
 // ABI declaration
@@ -132,6 +137,8 @@ abi Exchange {
     /// Swap ETH <-> Tokens and tranfers to sender.
     fn swap_with_maximum(gas_: u64, amount_: u64, asset_id_: b256, params: SwapWithMaximumParams) -> u64;
     fn input_price(gas_: u64, amount_: u64, asset_id_: b256, params: InputPriceParams) -> u64;
+    fn get_eth_reserves(gas_: u64, amount_: u64, asset_id_: b256, params: ()) -> u64;
+    fn get_token_reserves(gas_: u64, amount_: u64, asset_id_: b256, params: ()) -> u64;
 
 }
 
@@ -175,6 +182,14 @@ fn get_output_price(output_amount: u64, input_reserve: u64, output_reserve: u64)
 // ////////////////////////////////////////
 
 impl Exchange for Contract {
+
+    fn get_eth_reserves(gas_: u64, amount_: u64, asset_id_: b256, params: ()) -> u64 {
+        this_balance(ETH_ID)   
+    }
+
+    fn get_token_reserves(gas_: u64, amount_: u64, asset_id_: b256, params: ()) -> u64 {
+        this_balance(TOKEN_ID)   
+    }
 
     fn input_price(gas_: u64, amount_: u64, asset_id_: b256, params: InputPriceParams) -> u64 {
         get_input_price(params.input_amount, params.input_reserve, params.output_reserve)
