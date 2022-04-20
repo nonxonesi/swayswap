@@ -45,8 +45,8 @@ function PoolLoader({
           )}
         >
           <div className="flex-1">{stepText}</div>
-          {(step === index && loading) && <Spinner />}
-          {(step > index) && <RiCheckFill />}
+          {step === index && loading && <Spinner />}
+          {step > index && <RiCheckFill />}
         </li>
       ))}
     </ul>
@@ -78,19 +78,31 @@ export const Pool = () => {
     setIsLoading(true);
     // Deposit coins from
     setStage(1);
+    console.log(1, coinFrom.assetId);
+    const coins = await wallet.getCoinsToSpend([
+      [parseUnits(fromAmount, 9), coinFrom.assetId],
+    ]);
     await contract.functions.deposit({
       assetId: coinFrom.assetId,
-      amount: parseUnits(fromAmount, 9)
+      amount: parseUnits(fromAmount, 9),
+      inputs: coins,
     });
     // Deposit coins to
     setStage(2);
+    console.log(2, coinTo.assetId);
+    const amount = parseUnits(toAmount, 9);
+    const coins2 = await wallet.getCoinsToSpend([[amount, coinTo.assetId]]);
     await contract.functions.deposit({
       assetId: coinTo.assetId,
-      amount: parseUnits(toAmount, 9),
+      amount,
+      inputs: coins2,
     });
     // Create liquidity pool
     setStage(3);
-    await contract.functions.add_liquidity(1, parseUnits(toAmount, 9), 1000);
+    console.log(3);
+    await contract.functions.add_liquidity(1, parseUnits(toAmount, 9), 1000, {
+      variableOutputs: 1,
+    });
   };
 
   return (
@@ -100,7 +112,7 @@ export const Pool = () => {
           <h1>Pool</h1>
         </div>
         {isLoading ? (
-          <div className="flex justify-center mt-6 mb-8">
+          <div className="mt-6 mb-8 flex justify-center">
             <PoolLoader
               steps={[
                 `Deposit: ${coinFrom.name}`,
