@@ -15,13 +15,13 @@ async fn swayswap() {
     /////////////////////////////
     // Load the Swayswap contract
     /////////////////////////////
-    abigen!(TestSwayswap, "out/debug/swayswap_contract-abi.json");
+    abigen!(TestSwaySwap, "out/debug/swap_contract-abi.json");
     let swayswap_salt = Salt::from([0u8; 32]);
     let swayswap_compiled =
-        Contract::load_sway_contract("out/debug/swayswap_contract.bin", swayswap_salt).unwrap();
+        Contract::load_sway_contract("out/debug/swap_contract.bin", swayswap_salt).unwrap();
 
     // Get the contract ID and a handle to it
-    let swayswap_contract_id = Contract::deploy(
+    let swap_contract_id = Contract::deploy(
         &swayswap_compiled,
         &provider.clone(),
         &wallet.clone(),
@@ -29,8 +29,8 @@ async fn swayswap() {
     )
     .await
     .unwrap();
-    let swayswap_instance = TestSwayswap::new(
-        swayswap_contract_id.to_string(),
+    let swayswap_instance = TestSwaySwap::new(
+        swap_contract_id.to_string(),
         provider.clone(),
         wallet.clone(),
     );
@@ -44,7 +44,7 @@ async fn swayswap() {
         .unwrap();
 
     // Withdraw some native assets
-    let native_asset_id = testswayswap_mod::ContractId {
+    let native_asset_id = TestSwaySwap_mod::ContractId {
         value: NATIVE_ASSET_ID,
     };
     swayswap_instance
@@ -153,7 +153,7 @@ async fn swayswap() {
         .unwrap();
 
     // Inspect the wallet for LP tokens
-    let swayswap_asset_id_array: [u8; 32] = swayswap_contract_id.into();
+    let swayswap_asset_id_array: [u8; 32] = swap_contract_id.into();
     assert_eq!(
         wallet
             .get_spendable_coins(&AssetId::from(swayswap_asset_id_array), 1)
