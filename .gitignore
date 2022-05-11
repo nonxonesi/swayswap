@@ -11,3 +11,6 @@ Cargo.lock
 
 # Remove macOS's .DS_Store files
 .DS_Store
+
+# Contract ids
+envs.json

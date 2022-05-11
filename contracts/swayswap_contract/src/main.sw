@@ -5,8 +5,8 @@ use std::result::*;
 use swayswap_abi::{Exchange, RemoveLiquidityReturn, PoolInfo};
 
 ////////////////////////////////////////
-// Constants
-////////////////////////////////////////
+// Constants///
+///////////////////////////////////////
 
 /// Token ID of Ether
 const ETH_ID = 0x0000000000000000000000000000000000000000000000000000000000000000;
@@ -61,7 +61,7 @@ fn get_input_price(input_amount: u64, input_reserve: u64, output_reserve: u64) -
 
 /// Pricing function for converting between ETH and Tokens.
 fn get_output_price(output_amount: u64, input_reserve: u64, output_reserve: u64) -> u64 {
-    assert(input_reserve > 0 && output_reserve > 0);
+    assert(input_reserve > 0 && output_reserve > 1);
     let numerator: u64 = input_reserve * output_amount;
     let denominator: u64 = calculate_amount_with_fee(output_reserve - output_amount);
     numerator / denominator + 1

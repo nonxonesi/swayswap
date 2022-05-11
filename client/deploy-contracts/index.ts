@@ -25,6 +25,10 @@ const contractPath = path.join(
   __dirname,
   '../../contracts/swayswap_contract/out/debug/swayswap_contract.bin'
 );
+const envsConfigPath = path.join(
+  __dirname,
+  '../src/envs.json'
+);
 const providerUrl = process.env.REACT_APP_FUEL_PROVIDER_URL || 'https://node.swayswap.io/graphql';
 
 export const seedWallet = async (wallet: Wallet) => {
@@ -77,6 +81,11 @@ export async function deployContract(contextLog: string, binaryPath: string, abi
 
     console.log('SwaySwap Contract Id', contract.id);
     console.log('Token Contract Id', token.id);
+
+    fs.writeFileSync(envsConfigPath, JSON.stringify({
+      REACT_APP_CONTRACT_ID: contract.id,
+      REACT_APP_TOKEN_ID: token.id
+    }, null, 4));
   } catch (err) {
     console.error(err);
   }

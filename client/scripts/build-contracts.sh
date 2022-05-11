@@ -8,10 +8,14 @@ echo $SWAYSWAP_CONTRACT
 echo $TOKEN_CONTRACT
 
 echo "Build SwaySwap contract"
-forc build -p $SWAYSWAP_CONTRACT
+forc build --silent -p $SWAYSWAP_CONTRACT &
 echo "Build Token contract"
-forc build -p $TOKEN_CONTRACT
+forc build --silent -p $TOKEN_CONTRACT &
+
+# Waiting contracts build
+wait
+
 echo "Build Types for contract"
 npx typechain --target fuels --out-dir=./src/types/contracts '../contracts/**/out/debug/**.json'
 echo "Prettify codes"
-npm run prettier-format
+npx prettier --write src/types
