@@ -1,7 +1,6 @@
 import { useAtom, useSetAtom } from "jotai";
 import { startTransition, useEffect } from "react";
 
-import { PricePerToken } from "./PricePerToken";
 import {
   swapActiveInputAtom,
   swapAmountAtom,
@@ -108,6 +107,8 @@ export function SwapComponent({
         coin,
         from: coinFrom?.assetId,
         to: coinTo?.assetId,
+        coinFrom,
+        coinTo,
         direction: activeInput,
         hasBalance: fromInput.hasEnoughBalance,
       });
@@ -145,12 +146,6 @@ export function SwapComponent({
           coinSelectorDisabled={coinTo?.assetId === CoinETH}
         />
       </div>
-      <PricePerToken
-        fromCoin={coinFrom?.symbol}
-        fromAmount={fromInput.amount}
-        toCoin={coinTo?.symbol}
-        toAmount={toInput.amount}
-      />
     </>
   );
 }
