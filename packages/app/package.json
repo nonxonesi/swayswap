@@ -50,7 +50,8 @@
     "react-router-dom": "6",
     "spinners-react": "^1.0.7",
     "url-join": "^5.0.0",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xstate": "^4.32.1"
   },
   "devDependencies": {
     "@react-types/button": "^3.4.5",

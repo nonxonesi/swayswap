@@ -1,4 +1,5 @@
 import { parseUnits } from 'ethers/lib/utils';
+import { toBigInt } from 'fuels';
 
 export const FUEL_PROVIDER_URL =
   import.meta.env.VITE_FUEL_PROVIDER_URL || 'https://node.swayswap.io/graphql';
@@ -15,7 +16,7 @@ export const ONE_ASSET = parseUnits('1', DECIMAL_UNITS).toBigInt();
 export const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY!;
 export const ENABLE_FAUCET_API = import.meta.env.VITE_ENABLE_FAUCET_API === 'true';
 export const SLIPPAGE_TOLERANCE = 0.005;
-export const NETWORK_FEE = 1;
+export const NETWORK_FEE = toBigInt(1);
 
 // Max value supported
 // eslint-disable-next-line @typescript-eslint/no-loss-of-precision

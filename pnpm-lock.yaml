@@ -60,6 +60,7 @@ importers:
       url-join: ^5.0.0
       vite: ^2.9.7
       web-vitals: ^2.1.4
+      xstate: ^4.32.1
     dependencies:
       '@fontsource/fira-code': 4.5.9
       '@fontsource/inter': 4.5.10
@@ -84,7 +85,7 @@ importers:
       ethers: 5.6.6
       fuels: 0.0.0-master-d5e02003
       graphql-request: 4.2.0
-      jotai: 1.6.7_tgajdcwcfqxyh72yjgxojourrm
+      jotai: 1.6.7_3bbvlppnwvqgfqbpuhrzs5y3k4
       react: 18.1.0
       react-content-loader: 6.2.0_react@18.1.0
       react-dom: 18.1.0_react@18.1.0
@@ -98,6 +99,7 @@ importers:
       spinners-react: 1.0.7_e6senhi6gkhdouiqizr2s56gsi
       url-join: 5.0.0
       web-vitals: 2.1.4
+      xstate: 4.32.1
     devDependencies:
       '@react-types/button': 3.4.5_react@18.1.0
       '@react-types/dialog': 3.3.5_react@18.1.0
@@ -2741,7 +2743,7 @@ packages:
     resolution: {integrity: sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=}
     dev: true
 
-  /jotai/1.6.7_tgajdcwcfqxyh72yjgxojourrm:
+  /jotai/1.6.7_3bbvlppnwvqgfqbpuhrzs5y3k4:
     resolution: {integrity: sha512-MxAm86FYHm6asU3O1hbTKOWpPMP5oI8zNlgFRpZBB85cX79psF2eRb7ZqdGewOgYUUUKAlzZ+sH0IM7Pea6MkA==}
     engines: {node: '>=12.7.0'}
     peerDependencies:
@@ -2777,6 +2779,7 @@ packages:
     dependencies:
       react: 18.1.0
       react-query: 3.39.0_ef5jwxihqo6n7gxfmzogljlgcm
+      xstate: 4.32.1
     dev: false
 
   /js-sha3/0.8.0:
@@ -3744,6 +3747,10 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+    dev: false
+
+  /xstate/4.32.1:
+    resolution: {integrity: sha512-QYUd+3GkXZ8i6qdixnOn28bL3EvA++LONYL/EMWwKlFSh/hiLndJ8YTnz77FDs+JUXcwU7NZJg7qoezoRHc4GQ==}
     dev: false
 
   /xtend/4.0.2:

@@ -1,71 +1,65 @@
-import { BigNumber } from "ethers";
-import { toNumber } from "fuels";
 import { useAtomValue } from "jotai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AiOutlineSwap } from "react-icons/ai";
 
-import { swapIsTypingAtom } from "./jotai";
-import { ActiveInput } from "./types";
+import { getPricePerToken } from "./helpers";
+import {
+  swapAssetsAtom,
+  swapLoadingPreviewAtom,
+  swapPreviewAmountAtom,
+} from "./jotai";
+import type { Asset } from "./types";
 
 import { Button } from "~/components/Button";
-import { ONE_ASSET } from "~/config";
+import type { PreviewInfo } from "~/types/contracts/ExchangeContractAbi";
 
 const style = {
   wrapper: `flex items-center gap-3 my-4 px-2 text-sm text-gray-400`,
 };
 
-function getPricePerToken(
-  direction?: ActiveInput,
-  fromAmount?: bigint | null,
-  toAmount?: bigint | null
-) {
-  if (!toAmount || !fromAmount) return "";
-  const ratio =
-    direction === ActiveInput.from
-      ? BigNumber.from(fromAmount || 0).toNumber() /
-        BigNumber.from(toAmount || 0).toNumber()
-      : BigNumber.from(toAmount || 0).toNumber() /
-        BigNumber.from(fromAmount || 0).toNumber();
-  const price = ratio * toNumber(ONE_ASSET);
-  return (price / toNumber(ONE_ASSET)).toFixed(6);
-}
+const createTokenPair = (
+  assetFrom: Asset | null,
+  assetTo: Asset | null,
+  previewInfo: PreviewInfo | null
+): [Asset | null, Asset | null] => [
+  {
+    coin: assetFrom?.coin || null,
+    amount: assetFrom?.amount || previewInfo?.amount || null,
+  },
+  {
+    coin: assetTo?.coin || null,
+    amount: assetTo?.amount || previewInfo?.amount || null,
+  },
+];
 
-type PricePerTokenProps = {
-  fromCoin?: string;
-  fromAmount?: bigint | null;
-  toCoin?: string;
-  toAmount?: bigint | null;
-  isLoading?: boolean;
-};
+export function PricePerToken() {
+  const isLoadingPreview = useAtomValue(swapLoadingPreviewAtom);
+  const [assetFrom, assetTo] = useAtomValue(swapAssetsAtom);
+  const previewInfo = useAtomValue(swapPreviewAmountAtom);
+  const [[tokenA, tokenB], setTokens] = useState<[Asset | null, Asset | null]>([
+    null,
+    null,
+  ]);
 
-export function PricePerToken({
-  fromCoin,
-  fromAmount,
-  toCoin,
-  toAmount,
-  isLoading,
-}: PricePerTokenProps) {
-  const [direction, setDirection] = useState<ActiveInput>(ActiveInput.to);
-  const isTyping = useAtomValue(swapIsTypingAtom);
-
-  const pricePerToken = getPricePerToken(direction, fromAmount, toAmount);
-  const from = direction === ActiveInput.from ? toCoin : fromCoin;
-  const to = direction === ActiveInput.from ? fromCoin : toCoin;
+  const pricePerToken = getPricePerToken(tokenB?.amount, tokenA?.amount);
 
   function toggle() {
-    setDirection((dir) =>
-      dir === ActiveInput.from ? ActiveInput.to : ActiveInput.from
-    );
+    setTokens([tokenB, tokenA]);
   }
 
-  if (isTyping || isLoading) return null;
-  if (!fromAmount || !toAmount) return null;
+  useEffect(() => {
+    setTokens(createTokenPair(assetFrom, assetTo, previewInfo));
+  }, [assetFrom, assetTo, previewInfo]);
+
+  if (isLoadingPreview) return null;
+  if (!tokenA?.amount || !tokenB?.amount) return null;
 
   return (
     <div className={style.wrapper}>
       <div>
-        <span className="text-gray-200">1</span> {from} ={" "}
-        <span className="text-gray-200">{pricePerToken}</span> {to}
+        <span className="text-gray-200">1</span> {tokenA?.coin?.symbol} ={" "}
+        <span className="text-gray-200">{pricePerToken}</span>{" "}
+        {tokenB?.coin?.symbol}
       </div>
       <Button size="sm" className="h-auto p-0 border-none" onPress={toggle}>
         <AiOutlineSwap size={20} />

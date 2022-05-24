@@ -1,16 +1,13 @@
 import { atom, useSetAtom } from 'jotai';
 import { useRef } from 'react';
 
-import { ActiveInput } from './types';
+import type { Asset } from './types';
+import { Direction } from './types';
 
 import assets from '~/lib/CoinsMetadata';
-import type { Coin } from '~/types';
+import type { PreviewInfo } from '~/types/contracts/ExchangeContractAbi';
 
-export const swapActiveInputAtom = atom<ActiveInput>(ActiveInput.from);
-export const swapCoinsAtom = atom<[Coin | null, Coin | null]>([assets[0], null]);
-export const swapAmountAtom = atom<bigint | null>(null);
 export const swapIsTypingAtom = atom<boolean>(false);
-
 export const useSetTyping = () => {
   const setTyping = useSetAtom(swapIsTypingAtom);
   const timeout = useRef<number>(0);
@@ -27,3 +24,14 @@ export const useSetTyping = () => {
     }
   };
 };
+
+export const swapAssetsAtom = atom<[Asset | null, Asset | null]>([
+  {
+    coin: assets[0],
+    amount: null,
+  },
+  null,
+]);
+export const swapDirectionAtom = atom<Direction>(Direction.from);
+export const swapLoadingPreviewAtom = atom<boolean>(false);
+export const swapPreviewAmountAtom = atom<PreviewInfo | null>(null);

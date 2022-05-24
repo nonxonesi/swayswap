@@ -1,15 +1,14 @@
 import { toBigInt } from "fuels";
-import { useAtom } from "jotai";
-import { startTransition, useEffect } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import { startTransition } from "react";
 
 import {
-  swapActiveInputAtom,
-  swapAmountAtom,
-  swapCoinsAtom,
-  useSetTyping,
+  swapAssetsAtom,
+  swapDirectionAtom,
+  swapLoadingPreviewAtom,
+  swapPreviewAmountAtom,
 } from "./jotai";
-import type { SwapState } from "./types";
-import { ActiveInput } from "./types";
+import { Direction } from "./types";
 
 import { CoinInput, useCoinInput } from "~/components/CoinInput";
 import { InvertButton } from "~/components/InvertButton";
@@ -21,117 +20,66 @@ const style = {
   switchDirection: `flex items-center justify-center -my-5`,
 };
 
-type SwapComponentProps = {
-  previewAmount?: bigint | null;
-  onChange?: (swapState: SwapState) => void;
-  isLoading?: boolean;
-};
+const createAsset = (coin: Coin | null | undefined, amount: bigint | null) => ({
+  coin: coin || null,
+  amount,
+});
 
-export function SwapComponent({
-  onChange,
-  isLoading,
-  previewAmount,
-}: SwapComponentProps) {
-  const [initialAmount, setInitialAmount] = useAtom(swapAmountAtom);
-  const [activeInput, setActiveInput] = useAtom(swapActiveInputAtom);
-  const [[coinFrom, coinTo], setCoins] = useAtom(swapCoinsAtom);
-  const setTyping = useSetTyping();
+const toggleDirection = (direction: Direction) =>
+  direction === Direction.from ? Direction.to : Direction.from;
+
+export function SwapComponent() {
+  const previewAmount = useAtomValue(swapPreviewAmountAtom);
+  const [[assetFrom, assetTo], setAssets] = useAtom(swapAssetsAtom);
+  const [direction, setDirection] = useAtom(swapDirectionAtom);
+  const isLoading = useAtomValue(swapLoadingPreviewAtom);
 
   const handleInvertCoins = () => {
-    setTyping(true);
-    if (activeInput === ActiveInput.to) {
-      const from = fromInput.amount;
-      startTransition(() => {
-        setActiveInput(ActiveInput.from);
-        fromInput.setAmount(toInput.amount);
-        toInput.setAmount(from);
-      });
-    } else {
-      const to = toInput.amount;
-      startTransition(() => {
-        setActiveInput(ActiveInput.to);
-        toInput.setAmount(fromInput.amount);
-        fromInput.setAmount(to);
-      });
-    }
-    setCoins([coinTo, coinFrom]);
+    startTransition(() => {
+      setDirection(toggleDirection(direction));
+      setAssets([assetTo, assetFrom]);
+    });
   };
 
   const fromInput = useCoinInput({
-    coin: coinFrom,
-    gasFee: coinFrom?.assetId === CoinETH ? toBigInt(NETWORK_FEE) : ZERO,
-    onChangeCoin: (coin: Coin) => {
-      setCoins([coin, coinTo]);
+    coin: assetFrom?.coin,
+    amount:
+      direction === Direction.from ? assetFrom?.amount : previewAmount?.amount,
+    gasFee: assetFrom?.coin?.assetId === CoinETH ? toBigInt(NETWORK_FEE) : ZERO,
+    onChange: (value) => {
+      startTransition(() => {
+        setDirection(Direction.from);
+        setAssets([createAsset(assetFrom?.coin, value), assetTo]);
+      });
     },
-    onInput: () => {
-      setTyping(true);
-      setActiveInput(ActiveInput.from);
+    onChangeCoin: (coin: Coin) => {
+      setAssets([createAsset(coin, fromInput.amount), assetFrom]);
     },
   });
 
   const toInput = useCoinInput({
-    coin: coinTo,
-    onChangeCoin: (coin: Coin) => {
-      setCoins([coinFrom, coin]);
+    coin: assetTo?.coin,
+    amount:
+      direction === Direction.to ? assetTo?.amount : previewAmount?.amount,
+    onChange: (value) => {
+      startTransition(() => {
+        setDirection(Direction.to);
+        setAssets([assetFrom, createAsset(assetTo?.coin, value)]);
+      });
     },
-    onInput: () => {
-      setTyping(true);
-      setActiveInput(ActiveInput.to);
+    onChangeCoin: (coin: Coin) => {
+      setAssets([assetFrom, createAsset(coin, toInput.amount)]);
     },
   });
-
-  useEffect(() => {
-    if (activeInput === ActiveInput.to) {
-      toInput.setAmount(initialAmount);
-    } else {
-      fromInput.setAmount(initialAmount);
-    }
-  }, []);
-
-  useEffect(() => {
-    const currentInput = activeInput === ActiveInput.from ? fromInput : toInput;
-    const amount = currentInput.amount;
-
-    // This is used to reset preview amount when set first input value for null
-    if (activeInput === ActiveInput.from && amount === null) {
-      toInput.setAmount(null);
-    }
-    if (activeInput === ActiveInput.to && amount === null) {
-      fromInput.setAmount(null);
-    }
-
-    // Set value to hydrate
-    setInitialAmount(amount);
-
-    if (coinFrom && coinTo) {
-      // Call on onChange
-      onChange?.({
-        amount,
-        amountFrom: fromInput.amount,
-        coinFrom,
-        coinTo,
-        direction: activeInput,
-        hasBalance: fromInput.hasEnoughBalance,
-      });
-    }
-  }, [fromInput.amount, toInput.amount, coinFrom, coinTo]);
-
-  useEffect(() => {
-    if (activeInput === ActiveInput.from) {
-      toInput.setAmount(previewAmount || null);
-    } else {
-      fromInput.setAmount(previewAmount || null);
-    }
-  }, [previewAmount]);
 
   return (
     <>
       <div className="mt-4">
         <CoinInput
           {...fromInput.getInputProps()}
-          {...(activeInput === ActiveInput.to && { isLoading })}
-          autoFocus={activeInput === ActiveInput.from}
-          coinSelectorDisabled={coinFrom?.assetId === CoinETH}
+          {...(direction === Direction.to && { isLoading })}
+          autoFocus={direction === Direction.from}
+          coinSelectorDisabled={assetFrom?.coin?.assetId === CoinETH}
         />
       </div>
       <div className={style.switchDirection}>
@@ -140,9 +88,9 @@ export function SwapComponent({
       <div className="mb-4">
         <CoinInput
           {...toInput.getInputProps()}
-          {...(activeInput === ActiveInput.from && { isLoading })}
-          autoFocus={activeInput === ActiveInput.to}
-          coinSelectorDisabled={coinTo?.assetId === CoinETH}
+          {...(direction === Direction.from && { isLoading })}
+          autoFocus={direction === Direction.to}
+          coinSelectorDisabled={assetTo?.coin?.assetId === CoinETH}
         />
       </div>
     </>

@@ -3,39 +3,43 @@ import { useAtomValue } from "jotai";
 import { BsArrowDown } from "react-icons/bs";
 
 import { calculatePriceImpact, calculatePriceWithSlippage } from "./helpers";
-import { swapIsTypingAtom } from "./jotai";
-import type { SwapInfo } from "./types";
-import { ActiveInput } from "./types";
+import {
+  swapAssetsAtom,
+  swapDirectionAtom,
+  swapLoadingPreviewAtom,
+  swapPreviewAmountAtom,
+} from "./jotai";
+import { Direction } from "./types";
 
 import { PreviewItem, PreviewTable } from "~/components/PreviewTable";
 import { DECIMAL_UNITS, NETWORK_FEE } from "~/config";
+import { usePoolInfo } from "~/hooks/usePoolInfo";
 import { useSlippage } from "~/hooks/useSlippage";
 import { ZERO } from "~/lib/constants";
 
-type SwapPreviewProps = {
-  swapInfo: SwapInfo;
-  isLoading: boolean;
-};
-
-export function SwapPreview({ swapInfo, isLoading }: SwapPreviewProps) {
-  const { amount, previewAmount, direction, coinFrom, coinTo } = swapInfo;
-  const isTyping = useAtomValue(swapIsTypingAtom);
+export function SwapPreview() {
+  const isLoadingPreview = useAtomValue(swapLoadingPreviewAtom);
+  const [assetFrom, assetTo] = useAtomValue(swapAssetsAtom);
+  const previewInfo = useAtomValue(swapPreviewAmountAtom);
+  const direction = useAtomValue(swapDirectionAtom);
   const slippage = useSlippage();
+  const { data: poolInfo } = usePoolInfo();
 
   if (
-    !coinFrom ||
-    !coinTo ||
-    !previewAmount ||
+    !assetFrom?.coin ||
+    !assetTo?.coin ||
+    !previewInfo?.amount ||
     !direction ||
-    !amount ||
-    isLoading ||
-    isTyping
+    !assetFrom.amount ||
+    isLoadingPreview
   ) {
     return null;
   }
   // Expected amount of tokens to be received
   const outputAmount = formatUnits(
-    direction === ActiveInput.from ? previewAmount : amount || ZERO,
+    direction === Direction.from
+      ? previewInfo.amount
+      : assetFrom.amount || ZERO,
     DECIMAL_UNITS
   );
 
@@ -47,27 +51,36 @@ export function SwapPreview({ swapInfo, isLoading }: SwapPreviewProps) {
       <PreviewTable title="Expected out:" className="my-2">
         <PreviewItem
           title={"You'll receive:"}
-          value={`${outputAmount} ${coinTo.symbol}`}
+          value={`${outputAmount} ${assetTo.coin.symbol}`}
         />
         <PreviewItem
           title={"Price impact: "}
-          value={`${calculatePriceImpact(swapInfo)}%`}
+          value={`${calculatePriceImpact({
+            direction,
+            coinFrom: assetFrom.coin,
+            amount: assetFrom.amount || assetTo.amount,
+            previewAmount: previewInfo.amount,
+            eth_reserve: poolInfo?.eth_reserve,
+            token_reserve: poolInfo?.token_reserve,
+          })}%`}
         />
         <PreviewItem
           title={`${
-            direction === ActiveInput.from
+            direction === Direction.from
               ? "Minimum received after slippage"
               : "Maximum sent after slippage"
           } (${slippage.formatted}):`}
           value={`${formatUnits(
             calculatePriceWithSlippage(
-              previewAmount,
+              previewInfo.amount,
               slippage.value,
               direction
             ),
             DECIMAL_UNITS
           )} ${
-            direction === ActiveInput.from ? coinTo.symbol : coinFrom.symbol
+            direction === Direction.from
+              ? assetTo.coin.symbol
+              : assetFrom.coin.symbol
           }`}
         />
         <PreviewItem

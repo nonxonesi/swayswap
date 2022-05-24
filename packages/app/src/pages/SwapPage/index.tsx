@@ -1,40 +1,23 @@
-import type { CoinQuantity } from "fuels";
-import { toNumber } from "fuels";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { useAtom, useSetAtom } from "jotai";
+import { useEffect } from "react";
 import { MdSwapCalls } from "react-icons/md";
-import { useMutation, useQuery } from "react-query";
 
 import { PricePerToken } from "./PricePerToken";
 import { SwapComponent } from "./SwapComponent";
 import { SwapPreview } from "./SwapPreview";
-import { calculatePriceWithSlippage } from "./helpers";
-import { queryPreviewAmount, swapTokens } from "./queries";
-import type { SwapInfo, SwapState } from "./types";
-import { ActiveInput, ValidationStateEnum } from "./types";
+import { useUserGuidedStates } from "./hooks";
+import { swapLoadingPreviewAtom, swapPreviewAmountAtom } from "./jotai";
+import { useQueryMaximum, useQueryMinimum } from "./queries";
+import { ValidationStateEnum } from "./types";
 
 import { Button } from "~/components/Button";
 import { Card } from "~/components/Card";
-import { useContract } from "~/context/AppContext";
-import { useBalances } from "~/hooks/useBalances";
-import useDebounce from "~/hooks/useDebounce";
-import { usePoolInfo } from "~/hooks/usePoolInfo";
-import { useSlippage } from "~/hooks/useSlippage";
-import { ZERO } from "~/lib/constants";
-import { isSwayInfinity, sleep } from "~/lib/utils";
+import { isSwayInfinity } from "~/lib/utils";
 import type { PreviewInfo } from "~/types/contracts/ExchangeContractAbi";
-
-type StateParams = {
-  swapState: SwapState | null;
-  previewAmount: bigint | null;
-  hasLiquidity: boolean;
-  slippage: number;
-  balances?: CoinQuantity[];
-};
 
 const getValidationText = (
   state: ValidationStateEnum,
-  swapState: SwapState | null
+  coinSymbol: string | null
 ) => {
   switch (state) {
     case ValidationStateEnum.SelectToken:
@@ -42,7 +25,7 @@ const getValidationText = (
     case ValidationStateEnum.EnterAmount:
       return "Enter amount";
     case ValidationStateEnum.InsufficientBalance:
-      return `Insufficient ${swapState?.coinFrom.symbol || ""} balance`;
+      return `Insufficient ${coinSymbol || ""} balance`;
     case ValidationStateEnum.InsufficientAmount:
       return `Insufficient amount to swap`;
     case ValidationStateEnum.InsufficientLiquidity:
@@ -52,112 +35,28 @@ const getValidationText = (
   }
 };
 
-const getValidationState = ({
-  swapState,
-  previewAmount,
-  slippage,
-  balances,
-  hasLiquidity,
-}: StateParams): ValidationStateEnum => {
-  if (!swapState?.coinFrom || !swapState?.coinTo) {
-    return ValidationStateEnum.SelectToken;
-  }
-  if (!swapState?.amount) {
-    return ValidationStateEnum.EnterAmount;
-  }
-  if (
-    !swapState.hasBalance ||
-    (swapState.direction === ActiveInput.to &&
-      calculatePriceWithSlippage(
-        previewAmount || ZERO,
-        slippage,
-        swapState.direction
-      ) >
-        toNumber(
-          balances?.find((coin) => coin.assetId === swapState.coinFrom.assetId)
-            ?.amount || ZERO
-        ))
-  ) {
-    return ValidationStateEnum.InsufficientBalance;
-  }
-  if (!hasLiquidity || isSwayInfinity(previewAmount))
-    return ValidationStateEnum.InsufficientLiquidity;
-  return ValidationStateEnum.Swap;
-};
-
 export default function SwapPage() {
-  const contract = useContract()!;
-  const [previewInfo, setPreviewInfo] = useState<PreviewInfo | null>(null);
-  const [swapState, setSwapState] = useState<SwapState | null>(null);
-  const [hasLiquidity, setHasLiquidity] = useState(true);
-  const debouncedState = useDebounce(swapState);
-  const { data: poolInfo } = usePoolInfo(contract);
-  const previewAmount = previewInfo?.amount || ZERO;
-  const swapInfo = useMemo<SwapInfo>(
-    () => ({
-      ...poolInfo,
-      ...previewInfo,
-      ...swapState,
-      previewAmount,
-    }),
-    [poolInfo, previewInfo, swapState]
-  );
-  const slippage = useSlippage();
-  const { data: balances } = useBalances();
+  const [isLoadingPreview, setLoadingPreview] = useAtom(swapLoadingPreviewAtom);
+  const setPreviewAmount = useSetAtom(swapPreviewAmountAtom);
+  const userState = useUserGuidedStates();
 
-  const { isLoading } = useQuery(
-    [
-      "SwapPage-inactiveAmount",
-      debouncedState?.amount?.toString(),
-      debouncedState?.direction,
-      debouncedState?.coinFrom.assetId,
-      debouncedState?.coinTo.assetId,
-    ],
-    async () => {
-      if (!debouncedState?.amount) return null;
-      return queryPreviewAmount(contract, debouncedState);
-    },
-    {
-      onSuccess: (preview) => {
-        if (preview == null) return;
-        if (isSwayInfinity(preview.amount)) {
-          setPreviewInfo(null);
-          setHasLiquidity(false);
-        } else {
-          setHasLiquidity(preview.has_liquidity);
-          setPreviewInfo(preview);
-        }
-      },
+  const handleSuccess = (previewInfo: PreviewInfo | null) => {
+    if (isSwayInfinity(previewInfo?.amount || 0)) {
+      return setPreviewAmount(null);
     }
-  );
+    setPreviewAmount(previewInfo);
+  };
 
-  const { mutate: swap, isLoading: isSwaping } = useMutation(
-    async () => {
-      if (!swapState) return;
-      await swapTokens(contract, swapState);
-      await sleep(1000);
-    },
-    {
-      onSuccess: () => {
-        toast.success("Swap made successfully!");
-      },
-    }
-  );
-
-  function handleSwap(state: SwapState) {
-    setSwapState(state);
-  }
-
-  const validationState = getValidationState({
-    swapState,
-    balances,
-    slippage: slippage.value,
-    previewAmount,
-    hasLiquidity,
+  const { isLoading: isLoadingMaximum } = useQueryMaximum({
+    onSuccess: handleSuccess,
+  });
+  const { isLoading: isLoadingMinimum } = useQueryMinimum({
+    onSuccess: handleSuccess,
   });
 
-  const shouldDisableSwap =
-    isLoading || validationState !== ValidationStateEnum.Swap;
+  useEffect(() => {
+    setLoadingPreview(isLoadingMaximum || isLoadingMinimum);
+  }, [isLoadingMaximum, isLoadingMinimum]);
 
   return (
     <Card className="self-start min-w-[450px] mt-24">
@@ -165,28 +64,18 @@ export default function SwapPage() {
         <MdSwapCalls className="text-primary-500" />
         Swap
       </Card.Title>
-      <SwapComponent
-        previewAmount={previewAmount}
-        onChange={handleSwap}
-        isLoading={isLoading}
-      />
-      <SwapPreview isLoading={isLoading} swapInfo={swapInfo} />
-      <PricePerToken
-        isLoading={isLoading}
-        fromCoin={swapState?.coinFrom.symbol}
-        fromAmount={swapState?.amount}
-        toCoin={swapState?.coinTo.symbol}
-        toAmount={previewAmount}
-      />
+      <SwapComponent />
+      <SwapPreview />
+      <PricePerToken />
       <Button
         isFull
-        isLoading={isSwaping}
         size="lg"
         variant="primary"
-        isDisabled={shouldDisableSwap}
-        onPress={() => swap()}
+        isLoading={isLoadingPreview}
+        isDisabled={userState !== ValidationStateEnum.Swap}
+        // onPress={() => swap()}
       >
-        {getValidationText(validationState, swapState)}
+        {getValidationText(userState, null)}
       </Button>
     </Card>
   );

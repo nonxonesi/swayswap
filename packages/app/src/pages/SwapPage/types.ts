@@ -6,8 +6,18 @@ export enum ActiveInput {
   'to' = 'to',
 }
 
+export enum Direction {
+  'from' = 'from',
+  'to' = 'to',
+}
+
+export type Asset = {
+  coin: Coin | null;
+  amount: bigint | null;
+};
+
 export type SwapState = {
-  direction: ActiveInput;
+  direction: Direction;
   coinFrom: Coin;
   coinTo: Coin;
   amount: bigint | null;
