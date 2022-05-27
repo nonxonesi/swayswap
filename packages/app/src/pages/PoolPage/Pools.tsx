@@ -84,7 +84,7 @@ export default function Pools() {
   const { hasPositions } = useUserPositions();
 
   return (
-    <Card>
+    <Card className="self-start sm:min-w-[400px]">
       <Card.Title elementRight={<SubpagesNav />}>
         <BiDollarCircle className="text-primary-500" />
         Pool

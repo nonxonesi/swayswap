@@ -11,12 +11,18 @@ type TokenIconProps = {
   coinFrom?: Coin | null;
   coinTo?: Coin | null;
   size?: number;
+  className?: string;
 };
 
-export function TokenIcon({ coinFrom, coinTo, size = 20 }: TokenIconProps) {
+export function TokenIcon({
+  coinFrom,
+  coinTo,
+  size = 20,
+  className,
+}: TokenIconProps) {
   if (!coinFrom) return null;
   return (
-    <div className="flex items-center">
+    <div className={cx("flex items-center", className)}>
       <span className={style.icon}>
         <img
           src={coinFrom.img}

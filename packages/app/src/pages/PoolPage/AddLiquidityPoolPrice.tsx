@@ -1,7 +1,7 @@
 import { toNumber } from "fuels";
 
 import { DECIMAL_UNITS, ONE_ASSET } from "~/config";
-import { parseToFormattedNumber } from "~/lib/math";
+import { parseToFormattedNumber, toFixed } from "~/lib/math";
 import type { Coin } from "~/types";
 
 export interface AddLiquidityPoolPriceProps {
@@ -19,13 +19,19 @@ export const AddLiquidityPoolPrice = ({
   // If reservers ratio is 0 then user
   // is creating pool and the ratio is 1:1
   const reservesRatio = reservesFromToRatio || 0.5;
-  const daiPrice = parseToFormattedNumber(
-    Math.floor(oneAssetAmount / reservesRatio),
-    DECIMAL_UNITS
+  const daiPrice = toFixed(
+    parseToFormattedNumber(
+      Math.floor(oneAssetAmount / reservesRatio),
+      DECIMAL_UNITS
+    ),
+    3
   );
-  const ethPrice = parseToFormattedNumber(
-    Math.floor(oneAssetAmount * 1 * reservesRatio),
-    DECIMAL_UNITS
+  const ethPrice = toFixed(
+    parseToFormattedNumber(
+      Math.floor(oneAssetAmount * reservesRatio),
+      DECIMAL_UNITS
+    ),
+    3
   );
   return (
     <div>

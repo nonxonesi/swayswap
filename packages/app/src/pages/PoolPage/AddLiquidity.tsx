@@ -14,10 +14,11 @@ import { Card } from "~/components/Card";
 import { CoinInput, useCoinInput } from "~/components/CoinInput";
 import { CoinSelector } from "~/components/CoinSelector";
 import { Spinner } from "~/components/Spinner";
-import { useAddLiquidity } from "~/hooks/useAddLiquidity";
+import { SLIPPAGE_TOLERANCE } from "~/config";
 import { usePoolInfo } from "~/hooks/usePoolInfo";
 import assets from "~/lib/CoinsMetadata";
 import { ZERO, toBigInt, divideFnValidOnly, multiplyFn } from "~/lib/math";
+import { useAddLiquidity } from "~/pages/PoolPage/hooks/useAddLiquidity";
 import type { Coin } from "~/types";
 
 const style = {
@@ -90,7 +91,9 @@ export default function AddLiquidity() {
 
     if (reservesFromToRatio) {
       const value = val || ZERO;
-      const newFromValue = Math.floor(multiplyFn(value, reservesFromToRatio));
+      const newFromValue = Math.floor(
+        multiplyFn(value, reservesFromToRatio) * SLIPPAGE_TOLERANCE
+      );
       fromInput.setAmount(BigInt(newFromValue));
     }
   };

@@ -16,7 +16,8 @@ export const PoolCurrentPosition = () => {
         title="Pooled DAI"
         value={
           <div className="inline-flex items-center gap">
-            {info.formattedPooledDAI} <TokenIcon coinFrom={coinTo} size={14} />
+            {info.formattedPooledDAI}
+            <TokenIcon className="ml-2" coinFrom={coinTo} size={14} />
           </div>
         }
       />
@@ -24,8 +25,8 @@ export const PoolCurrentPosition = () => {
         title="Pooled ETH"
         value={
           <div className="inline-flex items-center gap">
-            {info.formattedPooledETH}{" "}
-            <TokenIcon coinFrom={coinFrom} size={14} />
+            {info.formattedPooledETH}
+            <TokenIcon className="ml-2" coinFrom={coinFrom} size={14} />
           </div>
         }
       />
@@ -33,8 +34,13 @@ export const PoolCurrentPosition = () => {
         title="Your pool tokens"
         value={
           <div className="flex flex-1 items-center justify-end">
-            {info.formattedPoolTokens}{" "}
-            <TokenIcon coinFrom={coinFrom} coinTo={coinTo} size={14} />
+            {info.formattedPoolTokens}
+            <TokenIcon
+              className="ml-2"
+              coinFrom={coinFrom}
+              coinTo={coinTo}
+              size={14}
+            />
           </div>
         }
       />

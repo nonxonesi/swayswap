@@ -3,11 +3,10 @@ import toast from 'react-hot-toast';
 import { useMutation } from 'react-query';
 import type { UseQueryResult } from 'react-query';
 
-import { useBalances } from './useBalances';
-
 import type { UseCoinInput } from '~/components/CoinInput';
 import { DEADLINE } from '~/config';
 import { useContract } from '~/context/AppContext';
+import { useFeedback } from '~/hooks/useFeedback';
 import type { Coin } from '~/types';
 import type { PoolInfo } from '~/types/contracts/Exchange_contractAbi';
 
@@ -31,7 +30,7 @@ export function useAddLiquidity({
   const [errorsCreatePull, setErrorsCreatePull] = useState<string[]>([]);
   const contract = useContract()!;
   const [stage, setStage] = useState(0);
-  const balances = useBalances();
+  const { refreshBalances } = useFeedback();
 
   const mutation = useMutation(
     async () => {
@@ -71,6 +70,7 @@ export function useAddLiquidity({
         }
         fromInput.setAmount(BigInt(0));
         toInput.setAmount(BigInt(0));
+        refreshBalances();
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (e: any) => {
@@ -89,11 +89,12 @@ export function useAddLiquidity({
             `Error when trying to ${reservesFromToRatio ? 'add liquidity to' : 'create'} this pool.`
           );
         }
+        refreshBalances({
+          showWallet: false,
+        });
       },
       onSettled: async () => {
         await poolInfoQuery.refetch();
-        await balances.refetch();
-
         setStage(0);
       },
     }

@@ -18,7 +18,7 @@ export function MainLayout() {
   return (
     <div className="layout">
       <Header />
-      <div className="layout--wrapper">
+      <div className="self-start sm:pt-10 layout--wrapper">
         <ErrorBoundary
           onReset={resetReactQuery}
           fallbackRender={({ error, resetErrorBoundary }) => (

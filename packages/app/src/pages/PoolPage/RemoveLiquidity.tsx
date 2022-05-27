@@ -12,7 +12,7 @@ import { CoinInput, useCoinInput } from "~/components/CoinInput";
 import { CoinSelector } from "~/components/CoinSelector";
 import { CONTRACT_ID, DEADLINE } from "~/config";
 import { useContract } from "~/context/AppContext";
-import { useBalances } from "~/hooks/useBalances";
+import { useFeedback } from "~/hooks/useFeedback";
 import coins from "~/lib/CoinsMetadata";
 import { ZERO } from "~/lib/math";
 
@@ -20,8 +20,8 @@ export default function RemoveLiquidityPage() {
   const [errorsRemoveLiquidity, setErrorsRemoveLiquidity] = useState<string[]>(
     []
   );
-  const balances = useBalances();
   const contract = useContract()!;
+  const { refreshBalances } = useFeedback();
 
   const liquidityToken = coins.find((c) => c.assetId === CONTRACT_ID);
   const tokenInput = useCoinInput({
@@ -45,7 +45,7 @@ export default function RemoveLiquidityPage() {
       onSuccess: () => {
         toast.success("Liquidity removed successfully!");
         tokenInput.setAmount(ZERO);
-        balances.refetch();
+        refreshBalances();
       },
       onError: (error: Error) => {
         toast.error(error.message);
@@ -90,7 +90,7 @@ export default function RemoveLiquidityPage() {
   };
 
   return (
-    <Card>
+    <Card className="sm:min-w-[400px]">
       <Card.Title>
         <BiDollarCircle className="text-primary-500" />
         Remove Liquidity

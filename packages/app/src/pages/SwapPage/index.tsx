@@ -194,7 +194,7 @@ export default function SwapPage() {
     isLoading || validationState !== ValidationStateEnum.Swap;
 
   return (
-    <Card className="sm:min-w-[450px]">
+    <Card className="sm:min-w-[400px]">
       <Card.Title>
         <MdSwapCalls className="text-primary-500" />
         Swap

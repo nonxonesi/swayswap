@@ -12,7 +12,7 @@ import { Tooltip } from "./Tooltip";
 import { DECIMAL_UNITS } from "~/config";
 import { useBalances } from "~/hooks/useBalances";
 import CoinsMetadata from "~/lib/CoinsMetadata";
-import { formatUnits } from "~/lib/math";
+import { formatUnits, toFixed } from "~/lib/math";
 import type { Coin } from "~/types";
 
 const formatValue = (amount: bigint | null | undefined) => {
@@ -112,7 +112,9 @@ export const CoinSelector = forwardRef<HTMLDivElement, CoinSelectorProps>(
         {(showBalance || showMaxButton) && (
           <div className="flex items-center gap-2 mt-2 whitespace-nowrap">
             {showBalance && (
-              <div className="text-xs text-gray-400">Balance: {balance}</div>
+              <div className="text-xs text-gray-400">
+                Balance: {toFixed(balance, 3)}
+              </div>
             )}
             {showMaxButton && (
               <Button

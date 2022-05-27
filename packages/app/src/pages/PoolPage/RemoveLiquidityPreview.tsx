@@ -37,7 +37,7 @@ export const RemoveLiquidityPreview = ({
           value={
             <div className="flex flex-1 items-center justify-end">
               {formattedPreviewDAIRemoved}{" "}
-              <TokenIcon coinFrom={coinTo} size={14} />
+              <TokenIcon className="ml-2" coinFrom={coinTo} size={14} />
             </div>
           }
         />
@@ -46,7 +46,7 @@ export const RemoveLiquidityPreview = ({
           value={
             <div className="flex flex-1 items-center justify-end">
               {formattedPreviewETHRemoved}{" "}
-              <TokenIcon coinFrom={coinFrom} size={14} />
+              <TokenIcon className="ml-2" coinFrom={coinFrom} size={14} />
             </div>
           }
         />
@@ -55,7 +55,12 @@ export const RemoveLiquidityPreview = ({
           value={
             <div className="flex flex-1 items-center justify-end">
               {formattedNextCurrentPoolTokens}{" "}
-              <TokenIcon coinFrom={coinFrom} coinTo={coinTo} size={14} />
+              <TokenIcon
+                className="ml-2"
+                coinFrom={coinFrom}
+                coinTo={coinTo}
+                size={14}
+              />
             </div>
           }
         />

@@ -33,7 +33,12 @@ export const AddLiquidityPreview = ({
         value={
           <div className="flex flex-1 items-center justify-end">
             {formattedPreviewTokens}{" "}
-            <TokenIcon coinFrom={coinFrom} coinTo={coinTo} size={14} />
+            <TokenIcon
+              className="ml-2"
+              coinFrom={coinFrom}
+              coinTo={coinTo}
+              size={14}
+            />
           </div>
         }
       />

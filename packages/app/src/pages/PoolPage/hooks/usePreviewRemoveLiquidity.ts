@@ -6,6 +6,7 @@ import {
   minimumZero,
   multiplyFn,
   parseToFormattedNumber,
+  toFixed,
   ZERO,
 } from '~/lib/math';
 
@@ -27,13 +28,13 @@ export function usePreviewRemoveLiquidity({ amountToRemove }: UsePreviewRemoveLi
     multiplyFn(maxAmount(amountToRemoveNum, userLPTokenBalance), ethReserve),
     totalLiquidity
   );
-  const formattedPreviewDAIRemoved = parseToFormattedNumber(
-    minimumZero(Math.floor(previewDAIRemoved)),
-    DECIMAL_UNITS
+  const formattedPreviewDAIRemoved = toFixed(
+    parseToFormattedNumber(minimumZero(Math.floor(previewDAIRemoved)), DECIMAL_UNITS),
+    3
   );
-  const formattedPreviewETHRemoved = parseToFormattedNumber(
-    minimumZero(Math.floor(previewETHRemoved)),
-    DECIMAL_UNITS
+  const formattedPreviewETHRemoved = toFixed(
+    parseToFormattedNumber(minimumZero(Math.floor(previewETHRemoved)), DECIMAL_UNITS),
+    3
   );
 
   const nextCurrentPoolTokens = minimumZero(poolTokensNum - amountToRemoveNum);
