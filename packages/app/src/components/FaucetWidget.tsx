@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import toast from "react-hot-toast";
 import { FaFaucet } from "react-icons/fa";
 
 import { Button } from "./Button";
@@ -8,9 +7,10 @@ import { Card } from "./Card";
 import { Dialog, useDialog } from "./Dialog";
 import { Tooltip } from "./Tooltip";
 
-import { ENABLE_FAUCET_API, FAUCET_AMOUNT, RECAPTCHA_SITE_KEY } from "~/config";
+import { ENABLE_FAUCET_API, RECAPTCHA_SITE_KEY } from "~/config";
 import { useAppContext } from "~/context/AppContext";
 import { useFaucet } from "~/hooks/useFaucet";
+import { useFeedback } from "~/hooks/useFeedback";
 import { useUserInfo } from "~/hooks/useUserInfo";
 
 export function FaucetWidget() {
@@ -20,10 +20,12 @@ export function FaucetWidget() {
   const dialog = useDialog();
   const [showTour, setShowTour] = useState(false);
   const [isLoading, setLoading] = useState(false);
+  const { refreshBalances } = useFeedback();
 
   const faucet = useFaucet({
     onSuccess: () => {
       if (userInfo.isNew) setUserInfo({ isNew: false });
+      refreshBalances();
       dialog.close();
     },
   });
@@ -52,8 +54,8 @@ export function FaucetWidget() {
     setLoading(true);
     if (userInfo.isNew) setUserInfo({ isNew: false });
     await appContext.faucet();
+    refreshBalances();
     setLoading(false);
-    toast.success(`${FAUCET_AMOUNT} ETH add to your wallet!`);
   }
 
   function handleClickFaucet() {

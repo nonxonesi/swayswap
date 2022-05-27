@@ -1,5 +1,7 @@
 import cx from "classnames";
 import clipboard from "clipboard";
+import { atom, useAtom } from "jotai";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaRegCopy } from "react-icons/fa";
 
@@ -19,20 +21,48 @@ const style = {
   buttonRight: `rounded-r-full`,
 };
 
+const walletWidgetOpenerAtom = atom(false);
+
+export function useWalletWidgetOpener() {
+  const [open, setOpen] = useAtom(walletWidgetOpenerAtom);
+
+  function pulse() {
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+    }, 3000);
+  }
+
+  return {
+    open,
+    setOpen,
+    pulse,
+  };
+}
+
 export function WalletWidget() {
   const wallet = useWallet();
   const ethBalance = useEthBalance();
   const { coins } = useAssets();
-
+  const { open, setOpen } = useWalletWidgetOpener();
   const popover = usePopover({
     placement: "bottom end",
     offset: 10,
     crossOffset: 42,
   });
 
+  useEffect(() => {
+    popover.setOpen(open);
+  }, [open]);
+
   const handleCopy = () => {
     clipboard.copy(wallet!.address);
     toast("Address copied", { icon: "✨" });
+  };
+
+  const handleCloseWallet = () => {
+    setOpen(false);
+    popover.close();
   };
 
   return (
@@ -54,7 +84,7 @@ export function WalletWidget() {
             </Button>
             {Boolean(coins.length) && (
               <Popover {...popover.rootProps}>
-                <WalletInfo onClose={() => popover.close()} />
+                <WalletInfo onClose={handleCloseWallet} />
               </Popover>
             )}
             <Button
