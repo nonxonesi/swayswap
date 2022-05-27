@@ -19,11 +19,11 @@ import { Card } from "~/components/Card";
 import { useContract } from "~/context/AppContext";
 import { useBalances } from "~/hooks/useBalances";
 import useDebounce from "~/hooks/useDebounce";
+import { useFeedback } from "~/hooks/useFeedback";
 import { usePoolInfo } from "~/hooks/usePoolInfo";
 import { useSlippage } from "~/hooks/useSlippage";
 import { COIN_ETH } from "~/lib/constants";
 import { ZERO, toNumber } from "~/lib/math";
-import { queryClient } from "~/lib/queryClient";
 import { isSwayInfinity, sleep } from "~/lib/utils";
 import type {
   PoolInfo,
@@ -120,6 +120,7 @@ export default function SwapPage() {
   const [hasLiquidity, setHasLiquidity] = useState(true);
   const debouncedState = useDebounce(swapState);
   const { data: poolInfo } = usePoolInfo();
+  const { refreshBalances } = useFeedback();
   const previewAmount = previewInfo?.amount || ZERO;
   const swapInfo = useMemo<SwapInfo>(
     () => ({
@@ -172,7 +173,7 @@ export default function SwapPage() {
       onSuccess: () => {
         setHasSwapped(true);
         toast.success("Swap made successfully!");
-        queryClient.refetchQueries(["AssetsPage-balances"]);
+        refreshBalances();
       },
     }
   );
